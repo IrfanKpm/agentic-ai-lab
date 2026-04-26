@@ -1,0 +1,9 @@
+
+# common requirements
+python-dotenv
+
+langchain
+langchain-openai
+langchain-google-genai
+
+# project : chat-bot

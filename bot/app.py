@@ -20,14 +20,14 @@ input_question = st.text_input("Ask something")
 gemini_llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest")
 
 
-# Backup model (Gemini)
+# Backup model (Openai)
 openai_llm = ChatOpenAI(model="gpt-4o-mini")
 
 # fallback setup
-llm = gemini_llm.with_fallbacks([gemini_llm])
+llm = gemini_llm.with_fallbacks([openai_llm])
 
 chain = prompt | llm | StrOutputParser()
 
 if input_question:
     response = chain.invoke({"question": input_question})
-    st.write(response)
+    st.write(response) #fix multi-LLM fallback setup

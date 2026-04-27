@@ -17,14 +17,14 @@ st.title("LangChain Multi-LLM Demo")
 input_question = st.text_input("Ask something")
 
 # Primary model
-gemini_llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest")
+gemini_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite") # gemini-2.5-flash-lite | gemini-2.5-flash
 
 
 # Backup model (Gemini)
 openai_llm = ChatOpenAI(model="gpt-4o-mini")
 
 # fallback setup
-llm = gemini_llm.with_fallbacks([gemini_llm])
+llm = gemini_llm.with_fallbacks([openai_llm])
 
 chain = prompt | llm | StrOutputParser()
 

@@ -1,10 +1,9 @@
 
-# common requirements
+streamlit
 python-dotenv
 
 langchain
 langchain-openai
 langchain-google-genai
 
-# project : chat-bot
-streamlit
+langchain-huggingface

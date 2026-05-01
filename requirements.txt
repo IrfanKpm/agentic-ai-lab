@@ -1,16 +1,26 @@
-
-streamlit
+# Environment management
 python-dotenv
 
-langchain
-langchain-openai
-langchain-google-genai
-langchain-community
-langchain-huggingface
+# Web app UI framework
+streamlit
 
-langserver
+# Backend API server (FastAPI stack)
 fastapi
 uvicorn
 sse-starlette
+langserver   # language server support (if used for tooling/autocomplete)
 
-beautifulsoup4
+# LangChain core + integrations (LLMs, tools, and community modules)
+langchain
+langchain-community
+langchain-openai
+langchain-google-genai
+langchain-huggingface
+
+# RAG (Retrieval-Augmented Generation) dependencies
+sentence-transformers
+langchain-chroma   # Chroma vector database (persistent, LangChain-supported wrapper)
+faiss-cpu          # Vector database (fast similarity search, in-memory)
+beautifulsoup4     # HTML parsing for web scraping
+playwright         # browser automation for dynamic content scraping
+pypdf              # reading, extracting, and manipulating PDF files

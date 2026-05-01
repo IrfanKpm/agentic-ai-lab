@@ -1,36 +1,108 @@
 import settings
+
 import bs4
 from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import WebBaseLoader
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
+
+from playwright.sync_api import sync_playwright
+from langchain_core.documents import Document
 
 
- # ----- METHOD 1 > 
-loader = TextLoader('appolo.txt')
-text_documents = loader.load()
-print(text_documents)
+# 1. LOAD SOURCE DATA
+
+# -------------------------
+# Text
+# -------------------------
+TEXT_METHOD = False
+
+if TEXT_METHOD:
+    loader = TextLoader('./src/appolo.txt')
+    docs = loader.load()
+    print(docs)
+
+# -------------------------
+#  Web (Playwright)
+# -------------------------
+WEB_METHOD = False
+
+urls = [
+    "https://medium.com/@aysebilgegunduz/everything-you-need-to-know-about-idor-insecure-direct-object-references-375f83e03a87",
+    "https://medium.com/@ud4y25/idor-vulnerabilities-explained-a-researchers-guide-to-authorization-flaws-82030def0e28"
+]
 
 
-#------- METHOD 2 > 
-# Medium renders content for Googlebot (SEO purposes)
-headers = {
-    "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
-}
+if WEB_METHOD:
+    docs = []
 
-url1 = "https://medium.com/@aysebilgegunduz/everything-you-need-to-know-about-idor-insecure-direct-object-references-375f83e03a87"
-url2 = "https://medium.com/@ud4y25/idor-vulnerabilities-explained-a-researchers-guide-to-authorization-flaws-82030def0e28"
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
 
-bs_config = {
-    "parse_only": bs4.SoupStrainer(
-        class_=["pw-post-body-paragraph", "pw-post-title"]
-    )
-}
+        for url in urls:
+            page.goto(url, wait_until="domcontentloaded", timeout=60000)
+            page.wait_for_timeout(5000)
 
-loader = WebBaseLoader(
-    web_path=(url1, url2),
-    bs_kwargs=bs_config,
-    requests_kwargs={"headers": headers}
+            html = page.content()
+            soup = bs4.BeautifulSoup(html, "html.parser")
+
+            elements = soup.find_all(
+                class_=["pw-post-title", "pw-post-body-paragraph"]
+            )
+
+            text = "\n".join(e.get_text() for e in elements)
+
+            docs.append(
+                Document(
+                    page_content=text,
+                    metadata={"source": url}
+                )
+            )
+
+        browser.close()
+
+    print(docs)
+
+
+# -------------------------
+# PDF
+# -------------------------
+PDF_METHOD = True
+
+if PDF_METHOD:
+    loader = PyPDFLoader("./src/attention.pdf")
+    docs = loader.load()
+
+# 2 . LOAD SOURCE DATA | Embeddings
+splitter = RecursiveCharacterTextSplitter(chunk_size = 600,chunk_overlap=150)
+docs = splitter.split_documents(docs)
+#print(docs[:2])
+
+embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
+# FAISS: fast in-memory vector store for similarity search
+# Chroma: persistent vector database for storing and retrieving embeddings
+# Using Chroma here for persistence and easier data management
+
+db = Chroma(
+    collection_name="rag_collection",
+    embedding_function=embeddings,
+    persist_directory="./chroma_db"
 )
 
-docs = loader.load()
-print(docs)
+db.add_documents(docs)
+
+query = "What is the Transformer model?"
+
+
+retriever = db.as_retriever(search_kwargs={"k": 3})
+results = retriever.invoke(query)
+
+for i, doc in enumerate(results):
+    print(f"\n--- Result {i+1} ---\n")
+    print(doc.page_content)
+
 

@@ -5,10 +5,12 @@ python-dotenv
 langchain
 langchain-openai
 langchain-google-genai
-
+langchain-community
 langchain-huggingface
 
 langserver
 fastapi
 uvicorn
 sse-starlette
+
+beautifulsoup4

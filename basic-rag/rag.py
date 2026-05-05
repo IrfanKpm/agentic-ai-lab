@@ -11,6 +11,9 @@ from langchain_chroma import Chroma
 from playwright.sync_api import sync_playwright
 from langchain_core.documents import Document
 
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain.chains.combine_documents import create_stuff_documents_chain
 
 # 1. LOAD SOURCE DATA
 
@@ -105,4 +108,21 @@ for i, doc in enumerate(results):
     print(f"\n--- Result {i+1} ---\n")
     print(doc.page_content)
 
+# LLM Model
+gemini_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite")
 
+context = "\n\n".join([doc.page_content for doc in results])
+
+prompt = ChatPromptTemplate.from_template("""
+Answer the question based only on the context below.
+
+<Context>{context}</Context>
+
+Question:
+{question}
+""")
+
+document_chain = create_stuff_documents_chain(
+    llm=gemini_llm,
+    prompt=prompt
+)

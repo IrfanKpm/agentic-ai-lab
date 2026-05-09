@@ -13,7 +13,7 @@ from langchain_core.documents import Document
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 
 # 1. LOAD SOURCE DATA
 
@@ -111,18 +111,33 @@ for i, doc in enumerate(results):
 # LLM Model
 gemini_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite")
 
-context = "\n\n".join([doc.page_content for doc in results])
-
 prompt = ChatPromptTemplate.from_template("""
 Answer the question based only on the context below.
 
 <Context>{context}</Context>
 
 Question:
-{question}
+{input}
 """)
 
-document_chain = create_stuff_documents_chain(
-    llm=gemini_llm,
-    prompt=prompt
-)
+# Document chain
+document_chain = create_stuff_documents_chain(llm=gemini_llm,prompt=prompt)
+
+#----------------------------------------------------------------------------------------------------
+# 'chains.combine_documents' refers to a set of chains used -
+#  to combine multiple retrieved documents into a single context before sending them to an LLM.
+
+# StuffDocumentsChain -> Puts all documents into one prompt.
+# MapReduceDocumentsChain -> Processes documents individually, then combines summaries.
+# RefineDocumentsChain -> Iteratively refines an answer using additional documents.
+# MapRerankDocumentsChain -> Ranks document answers and selects the best.
+#-----------------------------------------------------------------------------------------------------
+
+# Run chain
+response = document_chain.invoke({
+    "context": results,
+    "input": query
+})
+
+print("\nFinal Answer:\n")
+print(response)

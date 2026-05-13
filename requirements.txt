@@ -27,3 +27,7 @@ faiss-cpu
 beautifulsoup4
 playwright
 pypdf
+arxiv
+
+# Wikipedia support
+wikipedia

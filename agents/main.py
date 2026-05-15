@@ -6,6 +6,8 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.tools.retriever import create_retriever_tool
+from langchain_community.utilities import ArxivAPIWrapper
+from langchain_community.tools import ArxivQueryRun
 import settings
 
 
@@ -15,9 +17,9 @@ api_wrapper = WikipediaAPIWrapper(
     doc_content_chars_max=200
 )
 
-tool = WikipediaQueryRun(api_wrapper=api_wrapper)
+wiki_tool = WikipediaQueryRun(api_wrapper=api_wrapper)
 
-result = tool.run("LangChain")
+result = wiki_tool.run("LangChain")
 print(result)
 
 
@@ -55,3 +57,15 @@ retriever_tool = create_retriever_tool(
 
 response = retriever_tool.invoke("What are AI agents?")
 print(response)
+
+#src3
+arxiv_wrapper = ArxivAPIWrapper(
+    top_k_results=3,
+    doc_content_chars_max=4000
+)
+arxiv_tool = ArxivQueryRun(api_wrapper=arxiv_wrapper)
+
+arxiv_result = arxiv_tool.run("Large Language Models")
+
+tools = [wiki_tool,retriever_tool,arxiv_tool]
+print(tools)

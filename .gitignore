@@ -12,3 +12,8 @@ __pycache__/
 
 # Chroma vector DB
 chroma_db/
+
+# FAISS vector database
+faiss_index/
+
+

@@ -8,6 +8,9 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.tools.retriever import create_retriever_tool
 from langchain_community.utilities import ArxivAPIWrapper
 from langchain_community.tools import ArxivQueryRun
+from langchain_core.documents import Document
+
+import os
 import settings
 
 
@@ -28,19 +31,102 @@ gfg_url = "https://www.geeksforgeeks.org/artificial-intelligence/agents-artifici
 
 loader = WebBaseLoader(gfg_url)
 docs = loader.load()
-splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+
+
+# Saving webpage text locally avoids downloading
+# the webpage repeatedly in future runs.
+#
+# This improves startup speed significantly.
+with open("ai_agents.txt", "w", encoding="utf-8") as file:
+    file.write(docs[0].page_content)
+
+# Large documents are inefficient for embeddings.
+# Smaller chunks improve:
+# - retrieval accuracy
+# - memory efficiency
+# - search speed
+#
+# Optimization:
+# Reduced chunk_size from 1000 -> 500
+# Reduced overlap from 200 -> 50
+
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=500,
+    chunk_overlap=50
+)
+
+# Convert webpage into smaller text chunks
 documents = splitter.split_documents(docs)
 
 embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
 
-vectorDB = FAISS.from_documents(documents, embeddings)
-retriever = vectorDB.as_retriever()
+# Creating embeddings every run is expensive.
+#
+# Optimization:
+# Save FAISS database locally and reload it later.
+#
+# First Run:
+# - Create embeddings
+# - Build FAISS index
+# - Save locally
+#
+# Later Runs:
+# - Load FAISS directly
+# - Skip embedding generation
+#
+# This is the BIGGEST performance optimization.
+
+FAISS_DB_PATH = "faiss_index"
+# Check if FAISS index already exists
+if os.path.exists(FAISS_DB_PATH):
+
+    # Load existing FAISS index
+    vectorDB = FAISS.load_local(
+        FAISS_DB_PATH,
+        embeddings,
+        allow_dangerous_deserialization=True
+    )
+
+    print("FAISS index loaded from disk.")
+
+else:
+
+    # Create FAISS vector database
+    vectorDB = FAISS.from_documents(
+        documents,
+        embeddings
+    )
+
+    # Save FAISS database locally
+    vectorDB.save_local(FAISS_DB_PATH)
+    print("FAISS index created and saved.")
+
+
+# Retriever searches vector database for
+# semantically relevant chunks.
+#
+# Optimization:
+# k=2 means retrieve only top 2 chunks.
+#
+# Benefits:
+# - faster retrieval
+# - lower token usage
+# - faster LLM response
+
+retriever = vectorDB.as_retriever(
+    search_type="similarity",
+    search_kwargs={"k": 2}
+)
+
+# Agents can now use this tool automatically.
 
 retriever_tool = create_retriever_tool(
     retriever,
+    # Tool name
     "ai_agents_tool",
+    # Tool description
     """
     Use this tool for Artificial Intelligence Agents concepts.
 
@@ -55,6 +141,7 @@ retriever_tool = create_retriever_tool(
     """
 )
 
+# Query the retriever tool
 response = retriever_tool.invoke("What are AI agents?")
 print(response)
 

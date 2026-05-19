@@ -10,6 +10,8 @@ from langchain_community.utilities import ArxivAPIWrapper
 from langchain_community.tools import ArxivQueryRun
 from langchain_core.documents import Document
 
+from langchain.agents import create_agent
+
 import os
 import settings
 
@@ -22,8 +24,8 @@ api_wrapper = WikipediaAPIWrapper(
 
 wiki_tool = WikipediaQueryRun(api_wrapper=api_wrapper)
 
-result = wiki_tool.run("LangChain")
-print(result)
+#result = wiki_tool.run("LangChain")
+#print(result)
 
 
 # src2
@@ -142,8 +144,8 @@ retriever_tool = create_retriever_tool(
 )
 
 # Query the retriever tool
-response = retriever_tool.invoke("What are AI agents?")
-print(response)
+#response = retriever_tool.invoke("What are AI agents?")
+#print(response)
 
 #src3
 arxiv_wrapper = ArxivAPIWrapper(
@@ -151,8 +153,24 @@ arxiv_wrapper = ArxivAPIWrapper(
     doc_content_chars_max=4000
 )
 arxiv_tool = ArxivQueryRun(api_wrapper=arxiv_wrapper)
+#arxiv_result = arxiv_tool.run("Large Language Models")
 
-arxiv_result = arxiv_tool.run("Large Language Models")
+tools = [wiki_tool, retriever_tool, arxiv_tool]
 
-tools = [wiki_tool,retriever_tool,arxiv_tool]
-print(tools)
+# 2. Correctly initialize Gemini LLM
+llm = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash-lite",
+    temperature=0
+)
+
+# 3. Create the LangGraph-powered compiled agent
+agent = create_agent(
+    model=llm, 
+    tools=tools,
+    system_prompt="You are a research assistant. Use Wikipedia, the retriever, or ArXiv to provide accurate answers."
+)
+
+
+query = "Compare the architecture of a Simple Reflex Agent and a Learning Agent..."
+response_state = agent.invoke({"messages": [{"role": "user", "content": query}]})
+print(response_state["messages"][-1].content)

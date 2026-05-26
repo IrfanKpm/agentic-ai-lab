@@ -1,0 +1,16 @@
+
+# Environment management
+python-dotenv
+
+# Web app UI framework
+streamlit
+
+# LangChain ecosystem
+langchain
+langsmith
+langgraph
+
+langchain-community
+
+# Tooling
+uv

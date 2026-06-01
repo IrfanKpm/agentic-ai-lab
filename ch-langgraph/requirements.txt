@@ -9,7 +9,7 @@ streamlit
 langchain
 langsmith
 langgraph
-
+langchain-google-genai
 langchain-community
 
 # Tooling

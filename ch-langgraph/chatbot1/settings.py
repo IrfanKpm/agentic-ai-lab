@@ -10,4 +10,3 @@ load_dotenv(ENV_PATH)
 
 # API Keys
 os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY")
-print(os.getenv("GEMINI_API_KEY"))

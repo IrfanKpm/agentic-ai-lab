@@ -37,7 +37,7 @@ graph = graph_builder.compile()
 
 # Visualize the Graph
 def visualGraph():
-    image = graph.get_graph().draw_png()
+    image = graph.get_graph().draw_mermaid_png()
     with open("graph.png", "wb") as f:
         f.write(image)
 

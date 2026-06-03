@@ -1,19 +1,16 @@
 from typing import Annotated,TypedDict
+from pprint import pprint
 
 from langgraph.graph import StateGraph
 from langgraph.graph import START,END
 from langgraph.graph.message import add_messages  # message reducer for appending chat messages
 
 from langchain.chat_models import init_chat_model
-
 import settings
 
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
-
-
-
 
 llm = init_chat_model(
     model="gemini-2.5-flash-lite",
@@ -41,4 +38,17 @@ def visualGraph():
     with open("graph.png", "wb") as f:
         f.write(image)
 
-visualGraph()
+# Run once to generate graph.png, then keep disabled unless the graph changes.
+# visualGraph() 
+
+response = graph.invoke({"messages":"Who are you?"})
+pprint(response["messages"][-1].content)
+
+################ LangGraph Execution Methods Overview  ###################################################
+# graph.invoke({"messages": "hi"})  :: runs everything and returns final state.
+# graph.stream({"messages": "hi"})  :: step-by-step execution.
+# graph.astream({"messages": "hi"}) :: async streaming ( Used in FastAPI, async chat servers, etc..)
+###########################################################################################################
+
+for event in graph.stream({"messages":"hi"}):
+    print(event)

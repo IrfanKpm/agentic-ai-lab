@@ -10,3 +10,7 @@ load_dotenv(ENV_PATH)
 
 # API Keys
 os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY")
+
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_PROJECT"] = "langgraph-chatbot1"
+os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")

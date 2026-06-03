@@ -11,6 +11,7 @@ langsmith
 langgraph
 langchain-google-genai
 langchain-community
+langchain_tavily
 
 # Tooling
 uv

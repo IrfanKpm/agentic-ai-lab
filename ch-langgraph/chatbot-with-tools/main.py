@@ -4,6 +4,8 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain.chat_models import init_chat_model
+from langgraph.checkpoint.memory import MemorySaver
+
 from langchain_tavily import TavilySearch
 import settings
 
@@ -45,6 +47,8 @@ llm_agent = llm.bind_tools(tools)
 def tool_calling_llm(state: State):
     return {"messages": llm_agent.invoke(state["messages"])}
 
+memory = MemorySaver()
+
 # Graph-React architecture
 graph_builder = StateGraph(State)  
 # Creates a new state graph using the defined State schema.
@@ -72,7 +76,7 @@ graph_builder.add_edge("tools", "llm")
 graph_builder.add_edge("llm", END)  
 # If the LLM produces a final answer (no more tool calls), end the graph execution.
 # Compile graph
-graph = graph_builder.compile()  
+graph = graph_builder.compile(checkpointer=memory)  
 # Final step: compiles the graph into an executable LangGraph object.
 # After this, you can call graph.invoke(), graph.stream(), etc.
 
@@ -85,11 +89,25 @@ def visualGraph():
 # Run once to generate graph.png, then keep disabled unless the graph changes.
 #visualGraph()
 
+config = {
+    "configurable": {
+        "thread_id": "1"
+    }
+}
 
 # Q1
-response1 = graph.invoke({"messages": [("user", "what is latest AI news")]})
+response1 = graph.invoke(
+    {"messages": [("user", "Hi, my name is Irfan")]},
+    config=config
+)
+
 pprint(response1["messages"][-1].content)
 
 # Q2
-response2 = graph.invoke({"messages": [("user", "weather status in mumbai")]})
+response2= graph.invoke(
+    {"messages": [("user", "whoami")]},
+    config=config
+)
 pprint(response2["messages"][-1].content)
+
+
